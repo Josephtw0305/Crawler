@@ -77,26 +77,50 @@ namespace ApacheIssueCrawler
             #region People.
 
             // Assingee
+            /*
             HtmlNodeCollection assgineeTitle = doc.DocumentNode.SelectNodes($"//*[@id='peopledetails']/li/dl[1]/dt");
             HtmlNodeCollection assingeeContent = doc.DocumentNode.SelectNodes($"//*[@id='issue_summary_assignee_davsclaus']/text()");
+            */
+
+            title = doc.DocumentNode.SelectNodes($"//*[@id='peopledetails']/li/dl[1]/dt");
+            content = doc.DocumentNode.SelectNodes($"//*[@id='issue_summary_assignee_davsclaus']/text()");
+            addValuetoOutput(title, content, ref apacheIssueContent, false, true);
 
             // Reporter
+            /*
             HtmlNodeCollection reporterTitle = doc.DocumentNode.SelectNodes($"//*[@id='peopledetails']/li/dl[2]/dt");
             HtmlNodeCollection reporterContent = doc.DocumentNode.SelectNodes($"//*[@id='issue_summary_reporter_bobpaulin']/text()");
+            */
+            title = doc.DocumentNode.SelectNodes($"//*[@id='peopledetails']/li/dl[2]/dt");
+            content = doc.DocumentNode.SelectNodes($"//*[@id='issue_summary_reporter_bobpaulin']/text()");
+            addValuetoOutput(title, content, ref apacheIssueContent, false, true);
 
             // Votes:
+            /*
             HtmlNodeCollection votersTitle = doc.DocumentNode.SelectNodes($"//*[@id='peoplemodule']/div[2]/ul[2]/li/dl[1]/dt");
             HtmlNodeCollection votersContent = doc.DocumentNode.SelectNodes($"//*[@id='vote-data']");
+            */
+
+            title = doc.DocumentNode.SelectNodes($"//*[@id='peoplemodule']/div[2]/ul[2]/li/dl[1]/dt");
+            content = doc.DocumentNode.SelectNodes($"//*[@id='vote-data']");
+            addValuetoOutput(title, content, ref apacheIssueContent, false, true);
 
             // Watchers:
+            /*
             HtmlNodeCollection watchersTitle = doc.DocumentNode.SelectNodes($"//*[@id='peoplemodule']/div[2]/ul[2]/li/dl[2]/dt");
             HtmlNodeCollection watchersContent = doc.DocumentNode.SelectNodes($"//*[@id='watcher-data']");
+            */
+
+            title = doc.DocumentNode.SelectNodes($"//*[@id='peoplemodule']/div[2]/ul[2]/li/dl[2]/dt");
+            content = doc.DocumentNode.SelectNodes($"//*[@id='watcher-data']");
+            addValuetoOutput(title, content, ref apacheIssueContent, false, true);
             #endregion
 
             #region Dates
 
             // Create date.
             // [TODO] get the epoch.
+            /*
             title = doc.DocumentNode.SelectNodes($"//*[@id='datesmodule']/div[2]/ul/li/dl[1]/dt");
             content = doc.DocumentNode.SelectNodes($"//*[@id='created-val']/time");
             foreach (var item in title)
@@ -105,14 +129,22 @@ namespace ApacheIssueCrawler
             }
             apacheIssueContent.title.Add(outputValue+=",");
 
-            outputValue = "";
+             outputValue = "";
             foreach (var item in content)
             {
                 outputValue += item.InnerText.ToString().Replace(System.Environment.NewLine, "").Trim();
             }
             apacheIssueContent.content.Add(outputValue += ",");
+            */
+
+            title = doc.DocumentNode.SelectNodes($"//*[@id='datesmodule']/div[2]/ul/li/dl[1]/dt");
+            content = doc.DocumentNode.SelectNodes($"//*[@id='created-val']/time");
+            addValuetoOutput(title, content, ref apacheIssueContent, false, true);
+
+           
 
             // Update date.
+            /*
             title = doc.DocumentNode.SelectNodes($"//*[@id='datesmodule']/div[2]/ul/li/dl[2]/dt");
             content = doc.DocumentNode.SelectNodes($"//*[@id='updated-val']/time");
 
@@ -129,24 +161,15 @@ namespace ApacheIssueCrawler
                 outputValue += item.InnerText.ToString().Replace(System.Environment.NewLine, "").Trim();
             }
             apacheIssueContent.content.Add(outputValue += ",");
+            */
 
-            // Resolved date.
+            title = doc.DocumentNode.SelectNodes($"//*[@id='datesmodule']/div[2]/ul/li/dl[2]/dt");
+            content = doc.DocumentNode.SelectNodes($"//*[@id='updated-val']/time");
+            addValuetoOutput(title, content, ref apacheIssueContent, false, true);
+
             title = doc.DocumentNode.SelectNodes($"//*[@id='datesmodule']/div[2]/ul/li/dl[3]/dt");
             content = doc.DocumentNode.SelectNodes($"//*[@id='resolutiondate-val']/time");
-
-            outputValue = "";
-            foreach (var item in title)
-            {
-                outputValue += item.InnerText.ToString().Replace(System.Environment.NewLine, "").Trim().Replace(":", "");
-            }
-            apacheIssueContent.title.Add(outputValue += ",");
-
-            outputValue = "";
-            foreach (var item in content)
-            {
-                outputValue += item.InnerText.ToString().Replace(System.Environment.NewLine, "").Trim();
-            }
-            apacheIssueContent.content.Add(outputValue += ",");
+            addValuetoOutput(title, content, ref apacheIssueContent, false, true);
 
             #endregion
 
@@ -155,91 +178,15 @@ namespace ApacheIssueCrawler
             // Description.
             title = doc.DocumentNode.SelectNodes($"//*[@id='descriptionmodule_heading']/h4");
             content = doc.DocumentNode.SelectNodes($"//*[@id='description-val']/div");
-            addValuetoOutput(title,content, ref apacheIssueContent, false, false);
+            addValuetoOutput(title, content, ref apacheIssueContent, true, false);
 
-            // Comment.
-            /*
-            title = doc.DocumentNode.SelectNodes($"/html/body/div[1]/section/div[2]/div/div/div/div/div[2]/div/div/div/div[1]/div[5]/div[2]/div[1]/ul/li[2]/a/text()");
-            content = doc.DocumentNode.SelectNodes($"//*[@id='comment-15748543']/div[1]/div[1]/div[2]/text()");
-            */
-
-            // addValuetoOutput(title, content, ref apacheIssueContent);
+           
+            #endregion
 
             #endregion
 
-            
 
-            #endregion
-
-            #region Step 02: process the data.
-
-            // Check the content of nodecollection.
-            try
-            {
-                // People/Assingee.
-                foreach (var item in assgineeTitle)
-                {
-                    apacheIssueContent.assingeeTitle += item.InnerText.ToString();
-                }
-
-                foreach (var item in assingeeContent)
-                {
-                    apacheIssueContent.assingeeContent += item.InnerText.ToString();
-                }
-
-                foreach (var item in reporterTitle)
-                {
-                    apacheIssueContent.reportTitle += item.InnerText.ToString();
-                }
-
-                foreach (var item in reporterContent)
-                {
-                    apacheIssueContent.reporterContent += item.InnerText.ToString();
-                }
-
-                foreach (var item in votersTitle)
-                {
-                    apacheIssueContent.votersTitle += item.InnerText.ToString();
-                }
-
-                foreach (var item in votersContent)
-                {
-                    apacheIssueContent.numberofVoters += item.InnerText.ToString();
-                }
-
-                foreach (var item in watchersTitle)
-                {
-                    apacheIssueContent.watchersTitle += item.InnerText.ToString();
-
-                }
-
-                foreach (var item in watchersContent)
-                {
-                    apacheIssueContent.numberofWatchers += item.InnerText.ToString();
-
-                }
-
-                apacheIssueContent.assingeeTitle = apacheIssueContent.assingeeTitle.Replace(System.Environment.NewLine, "").Trim();
-                apacheIssueContent.reportTitle = apacheIssueContent.reportTitle.Replace(System.Environment.NewLine, "").Trim();
-                apacheIssueContent.votersTitle = apacheIssueContent.votersTitle.Replace(System.Environment.NewLine, "").Trim();
-                apacheIssueContent.watchersTitle = apacheIssueContent.watchersTitle.Replace(System.Environment.NewLine, "").Trim();
-
-                apacheIssueContent.assingeeContent = apacheIssueContent.assingeeContent.Replace(System.Environment.NewLine, "").Trim();
-                apacheIssueContent.reporterContent = apacheIssueContent.reporterContent.Replace(System.Environment.NewLine, "").Trim();
-                apacheIssueContent.numberofVoters = apacheIssueContent.numberofVoters.Replace(System.Environment.NewLine, "").Trim();
-                apacheIssueContent.numberofWatchers = apacheIssueContent.numberofWatchers.Replace(System.Environment.NewLine, "").Trim();
-                
-            }
-            catch (Exception ex)
-            {
-
-                throw ex;
-            }
-
-            // [TODO: export to CSV file.]
-            #endregion
-
-            #region export to CSV file.
+            #region step2: export to CSV file.
 
             string directory = @"c:\tmp"; ;
             string fileName = $"result_{DateTime.Now.ToString("yyyyMMddHHmmss")}.csv";
@@ -262,7 +209,7 @@ namespace ApacheIssueCrawler
             outputValue = "";
             foreach (var item in content)
             {
-                outputValue += item.InnerText.ToString().Replace(System.Environment.NewLine, "").Trim();
+                outputValue += item.InnerText.ToString().Replace("\n", "").Trim();
                 if (isRemoveContentInnerSpace)
                 {
                     outputValue = outputValue.Replace(",", "/");
@@ -298,29 +245,33 @@ namespace ApacheIssueCrawler
                 File.Create(fileFullPath);
             }
 
-            // [TODO] Replace of the title.
             // Export the content to target file.
             using (var sm = new StreamWriter(fileFullPath))
             {
-                string title = data.assingeeTitle + "," + data.reportTitle + "," + data.votersTitle + "," + data.watchersTitle + ",";
-                title = title.Replace(":", "");
+
+ 
+                string title = "";
+                string content = "";
 
                 foreach (var item in data.title)
                 {
                     title += item;
                 }
 
-                string content = data.assingeeContent + "," + data.reporterContent + "," + data.numberofVoters + "," + data.numberofWatchers + ",";
 
                 foreach (var item in data.content)
                 {
                     content += item;
                 }
 
+                // remove the last comma of title and content.
+                title = title.Substring(0, title.Length - 1);
+                content = content.Substring(0, content.Length - 1);
+
+
                 sm.WriteLineAsync(title);
                 sm.WriteLineAsync(content);
-                //sm.Flush();
-                //sm.Close();
+               
             }
         }
     }
