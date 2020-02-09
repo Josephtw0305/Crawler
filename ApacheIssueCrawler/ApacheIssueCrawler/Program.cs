@@ -20,7 +20,6 @@ namespace ApacheIssueCrawler
             #region Details
             HtmlNodeCollection title = null;
             HtmlNodeCollection content = null;
-            string outputValue = "";
 
             // Type.
             title = doc.DocumentNode.SelectNodes($"//*[@id='issuedetails']/li[1]/div/strong");
@@ -77,40 +76,21 @@ namespace ApacheIssueCrawler
             #region People.
 
             // Assingee
-            /*
-            HtmlNodeCollection assgineeTitle = doc.DocumentNode.SelectNodes($"//*[@id='peopledetails']/li/dl[1]/dt");
-            HtmlNodeCollection assingeeContent = doc.DocumentNode.SelectNodes($"//*[@id='issue_summary_assignee_davsclaus']/text()");
-            */
-
             title = doc.DocumentNode.SelectNodes($"//*[@id='peopledetails']/li/dl[1]/dt");
             content = doc.DocumentNode.SelectNodes($"//*[@id='issue_summary_assignee_davsclaus']/text()");
             addValuetoOutput(title, content, ref apacheIssueContent, false, true);
 
             // Reporter
-            /*
-            HtmlNodeCollection reporterTitle = doc.DocumentNode.SelectNodes($"//*[@id='peopledetails']/li/dl[2]/dt");
-            HtmlNodeCollection reporterContent = doc.DocumentNode.SelectNodes($"//*[@id='issue_summary_reporter_bobpaulin']/text()");
-            */
             title = doc.DocumentNode.SelectNodes($"//*[@id='peopledetails']/li/dl[2]/dt");
             content = doc.DocumentNode.SelectNodes($"//*[@id='issue_summary_reporter_bobpaulin']/text()");
             addValuetoOutput(title, content, ref apacheIssueContent, false, true);
 
             // Votes:
-            /*
-            HtmlNodeCollection votersTitle = doc.DocumentNode.SelectNodes($"//*[@id='peoplemodule']/div[2]/ul[2]/li/dl[1]/dt");
-            HtmlNodeCollection votersContent = doc.DocumentNode.SelectNodes($"//*[@id='vote-data']");
-            */
-
             title = doc.DocumentNode.SelectNodes($"//*[@id='peoplemodule']/div[2]/ul[2]/li/dl[1]/dt");
             content = doc.DocumentNode.SelectNodes($"//*[@id='vote-data']");
             addValuetoOutput(title, content, ref apacheIssueContent, false, true);
 
             // Watchers:
-            /*
-            HtmlNodeCollection watchersTitle = doc.DocumentNode.SelectNodes($"//*[@id='peoplemodule']/div[2]/ul[2]/li/dl[2]/dt");
-            HtmlNodeCollection watchersContent = doc.DocumentNode.SelectNodes($"//*[@id='watcher-data']");
-            */
-
             title = doc.DocumentNode.SelectNodes($"//*[@id='peoplemodule']/div[2]/ul[2]/li/dl[2]/dt");
             content = doc.DocumentNode.SelectNodes($"//*[@id='watcher-data']");
             addValuetoOutput(title, content, ref apacheIssueContent, false, true);
@@ -119,50 +99,11 @@ namespace ApacheIssueCrawler
             #region Dates
 
             // Create date.
-            // [TODO] get the epoch.
-            /*
-            title = doc.DocumentNode.SelectNodes($"//*[@id='datesmodule']/div[2]/ul/li/dl[1]/dt");
-            content = doc.DocumentNode.SelectNodes($"//*[@id='created-val']/time");
-            foreach (var item in title)
-            {
-                outputValue += item.InnerText.ToString().Replace(System.Environment.NewLine, "").Trim().Replace(":","");
-            }
-            apacheIssueContent.title.Add(outputValue+=",");
-
-             outputValue = "";
-            foreach (var item in content)
-            {
-                outputValue += item.InnerText.ToString().Replace(System.Environment.NewLine, "").Trim();
-            }
-            apacheIssueContent.content.Add(outputValue += ",");
-            */
-
             title = doc.DocumentNode.SelectNodes($"//*[@id='datesmodule']/div[2]/ul/li/dl[1]/dt");
             content = doc.DocumentNode.SelectNodes($"//*[@id='created-val']/time");
             addValuetoOutput(title, content, ref apacheIssueContent, false, true);
 
-           
-
             // Update date.
-            /*
-            title = doc.DocumentNode.SelectNodes($"//*[@id='datesmodule']/div[2]/ul/li/dl[2]/dt");
-            content = doc.DocumentNode.SelectNodes($"//*[@id='updated-val']/time");
-
-            outputValue = "";
-            foreach (var item in title)
-            {
-                outputValue += item.InnerText.ToString().Replace(System.Environment.NewLine, "").Trim().Replace(":", "");
-            }
-            apacheIssueContent.title.Add(outputValue += ",");
-
-            outputValue = "";
-            foreach (var item in content)
-            {
-                outputValue += item.InnerText.ToString().Replace(System.Environment.NewLine, "").Trim();
-            }
-            apacheIssueContent.content.Add(outputValue += ",");
-            */
-
             title = doc.DocumentNode.SelectNodes($"//*[@id='datesmodule']/div[2]/ul/li/dl[2]/dt");
             content = doc.DocumentNode.SelectNodes($"//*[@id='updated-val']/time");
             addValuetoOutput(title, content, ref apacheIssueContent, false, true);
@@ -179,12 +120,10 @@ namespace ApacheIssueCrawler
             title = doc.DocumentNode.SelectNodes($"//*[@id='descriptionmodule_heading']/h4");
             content = doc.DocumentNode.SelectNodes($"//*[@id='description-val']/div");
             addValuetoOutput(title, content, ref apacheIssueContent, true, false);
-
-           
+s
             #endregion
 
             #endregion
-
 
             #region step2: export to CSV file.
 
@@ -204,7 +143,7 @@ namespace ApacheIssueCrawler
                 outputValue += item.InnerText.ToString().Replace(System.Environment.NewLine, "").Trim().Replace(":", "");
             }
           
-            result.title.Add(outputValue += ",");
+            result.titles.Add(outputValue += ",");
 
             outputValue = "";
             foreach (var item in content)
@@ -220,7 +159,7 @@ namespace ApacheIssueCrawler
             {
                 outputValue = outputValue.Replace(" ", "");
             }
-            result.content.Add(outputValue += ",");
+            result.contents.Add(outputValue += ",");
         }
 
         /// <summary>
@@ -245,7 +184,7 @@ namespace ApacheIssueCrawler
                 File.Create(fileFullPath);
             }
 
-            // Export the content to target file.
+            // Export the contents to target file.
             using (var sm = new StreamWriter(fileFullPath))
             {
 
@@ -253,18 +192,18 @@ namespace ApacheIssueCrawler
                 string title = "";
                 string content = "";
 
-                foreach (var item in data.title)
+                foreach (var item in data.titles)
                 {
                     title += item;
                 }
 
 
-                foreach (var item in data.content)
+                foreach (var item in data.contents)
                 {
                     content += item;
                 }
 
-                // remove the last comma of title and content.
+                // remove the last comma of titles and contents.
                 title = title.Substring(0, title.Length - 1);
                 content = content.Substring(0, content.Length - 1);
 

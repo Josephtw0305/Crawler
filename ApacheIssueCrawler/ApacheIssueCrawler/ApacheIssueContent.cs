@@ -6,49 +6,15 @@ namespace ApacheIssueCrawler
 {
     class ApacheIssueContent
     {
+ 
         /// <summary>
-        /// Assingee's Title.
+        /// Titles of all properties.
         /// </summary>
-        public string assingeeTitle { get; set; }
-
-        /// <summary>
-        /// Assingee's Content.
-        /// </summary>
-        public string assingeeContent { get; set; }
+        public List<string> titles = new List<string>();
 
         /// <summary>
-        /// Reporter's Title.
+        /// Contents of all properties.
         /// </summary>
-        public string reportTitle { get; set; }
-
-        /// <summary>
-        /// Report's Content.
-        /// </summary>
-        public string reporterContent { get; set; }
-
-        /// <summary>
-        /// Voters' Title.
-        /// </summary>
-        public string votersTitle { get; set; }
-
-        /// <summary>
-        /// Voters' Content.
-        /// </summary>
-        public string numberofVoters { get; set; }
-
-        /// <summary>
-        /// Watchers' Title.
-        /// </summary>
-        public string watchersTitle { get; set; }
-
-        /// <summary>
-        /// Watehrs' Content.
-        /// </summary>
-        public string numberofWatchers { get; set; }
-
-
-        public List<string> title = new List<string>();
-
-        public List<string> content = new List<string>();
+        public List<string> contents = new List<string>();
     }
 }
