@@ -1,6 +1,7 @@
 ﻿using HtmlAgilityPack;
 using System;
 using System.IO;
+using System.Threading;
 
 namespace ApacheIssueCrawler
 {
@@ -9,11 +10,21 @@ namespace ApacheIssueCrawler
         static void Main(string[] args)
         {
             Console.WriteLine("Let's begin to crawl!");
+            Console.Write("Please enter the max number of issue:");
+            Console.ReadLine();
+
             HtmlWeb webClient = new HtmlWeb();
             ApacheIssueContent apacheIssueContent = new ApacheIssueContent();
 
             // Set the target url that we desire to crawl.
-            HtmlDocument doc = webClient.Load("https://issues.apache.org/jira/browse/CAMEL-10597");
+            HtmlDocument doc = webClient.Load("https://issues.apache.org/jira/browse/CAMEL-10597?page=com.atlassian.jira.plugin.system.issuetabpanels:comment-tabpanel");
+            
+
+            // wait for completing the content.
+            Thread.Sleep(15000);
+            
+            apacheIssueContent.titles.Add("Issue No,");
+            apacheIssueContent.contents.Add("10598,");
 
             #region Step 01:get the raw data from the URL.
 
@@ -120,7 +131,7 @@ namespace ApacheIssueCrawler
             title = doc.DocumentNode.SelectNodes($"//*[@id='descriptionmodule_heading']/h4");
             content = doc.DocumentNode.SelectNodes($"//*[@id='description-val']/div");
             addValuetoOutput(title, content, ref apacheIssueContent, true, false);
-s
+
             #endregion
 
             #endregion
@@ -138,26 +149,43 @@ s
         {
            
             string outputValue = "";
-            foreach (var item in title)
+
+            if (title != null)
             {
-                outputValue += item.InnerText.ToString().Replace(System.Environment.NewLine, "").Trim().Replace(":", "");
+                foreach (var item in title)
+                {
+                    outputValue += item.InnerText.ToString().Replace(System.Environment.NewLine, "").Trim().Replace(":", "");
+                }
             }
+            else
+            {
+                outputValue = "ParseTitleFail";
+            }
+          
           
             result.titles.Add(outputValue += ",");
 
             outputValue = "";
-            foreach (var item in content)
+
+            if (content != null)
             {
-                outputValue += item.InnerText.ToString().Replace("\n", "").Trim();
+                foreach (var item in content)
+                {
+                    outputValue += item.InnerText.ToString().Replace("\n", "").Trim();
+                    if (isRemoveContentInnerSpace)
+                    {
+                        outputValue = outputValue.Replace(",", "/");
+                    }
+                }
+
                 if (isRemoveContentInnerSpace)
                 {
-                    outputValue = outputValue.Replace(",", "/");
+                    outputValue = outputValue.Replace(" ", "");
                 }
             }
-
-            if (isRemoveContentInnerSpace)
+            else
             {
-                outputValue = outputValue.Replace(" ", "");
+                outputValue = "ParseContentFail";
             }
             result.contents.Add(outputValue += ",");
         }
