@@ -2,6 +2,7 @@
 using System;
 using System.IO;
 using System.Threading;
+using System.Xml;
 
 namespace ApacheIssueCrawler
 {
@@ -10,127 +11,249 @@ namespace ApacheIssueCrawler
         static void Main(string[] args)
         {
             Console.WriteLine("Let's begin to crawl!");
-            Console.Write("Please enter the max number of issue:");
-            Console.ReadLine();
+            
+            int startNumber = 0;
+            int maxNumber = 0;
 
+            while (true)
+            {
+                ApacheIssueContent apacheIssueContent = new ApacheIssueContent();
+                while (startNumber == 0)
+                {
+                    Console.Write("Please enter the start number of issue (-9999 to end):");
+                    var inputNumber = Console.ReadLine();
+                    Int32.TryParse(inputNumber, out startNumber);
+
+                    if (startNumber == -9999)
+                    {
+                        Environment.Exit(-1);
+                    }
+
+                    if (startNumber == 0)
+                    {
+                        Console.WriteLine("Please input number, thanks!");
+                    }
+                }
+
+                while (maxNumber == 0 || (maxNumber < startNumber))
+                {
+                    Console.Write("Please enter the end number of issue (-9999 to end):");
+                    var inputNumber = Console.ReadLine();
+                    Int32.TryParse(inputNumber, out maxNumber);
+
+                    if (maxNumber == -9999)
+                    {
+                        Environment.Exit(-1);
+                    }
+
+                    if (maxNumber == 0)
+                    {
+                        Console.WriteLine("Please input number, thanks!");
+                        continue;
+                    }
+
+                    if (maxNumber < startNumber)
+                    {
+                        Console.WriteLine("MaxNumber need to be smaller than startNumber, please input again!");
+                    }
+                }
+
+                string fileName = $"result_{DateTime.Now.ToString("yyyyMMddHHmmss")}.csv";
+               
+
+                // Set titles.
+                setTitleforOutput(ref apacheIssueContent);
+
+                for (int issueNo = startNumber; issueNo <= maxNumber; issueNo++)
+                {
+                    bool isExportCSV = (issueNo == maxNumber) ? true : false;
+                    processIssue(issueNo, fileName, isExportCSV, ref apacheIssueContent);
+                }
+
+                Console.WriteLine($"Process issues from {startNumber} to {maxNumber} completed, fileName:{fileName}");
+
+                // Reset control parameters.
+                apacheIssueContent.titles.Clear();
+                apacheIssueContent.contents.Clear();
+                startNumber = 0;
+                maxNumber = 0;
+            }
+          
+        }
+
+        private static void processIssue(int issueNo, string exportFileName, bool isExportCSV, ref ApacheIssueContent apacheIssueContent)
+        {
             HtmlWeb webClient = new HtmlWeb();
-            ApacheIssueContent apacheIssueContent = new ApacheIssueContent();
+            
 
             // Set the target url that we desire to crawl.
-            HtmlDocument doc = webClient.Load("https://issues.apache.org/jira/browse/CAMEL-10597?page=com.atlassian.jira.plugin.system.issuetabpanels:comment-tabpanel");
-            
+            string urlforOtherFields = $"https://issues.apache.org/jira/browse/CAMEL-{issueNo}";
+            string urlforComment = $"https://issues.apache.org/jira/si/jira.issueviews:issue-xml/CAMEL-{issueNo}/CAMEL-{issueNo}.xml";
 
-            // wait for completing the content.
-            Thread.Sleep(15000);
-            
-            apacheIssueContent.titles.Add("Issue No,");
-            apacheIssueContent.contents.Add("10598,");
+            // Add issue no to output.
+            apacheIssueContent.contents.Add($"{issueNo};");
 
             #region Step 01:get the raw data from the URL.
+
+            HtmlDocument doc = webClient.Load(urlforOtherFields);
 
             #region Details
             HtmlNodeCollection title = null;
             HtmlNodeCollection content = null;
 
             // Type.
-            title = doc.DocumentNode.SelectNodes($"//*[@id='issuedetails']/li[1]/div/strong");
             content = doc.DocumentNode.SelectNodes($"//*[@id='type-val']/text()");
-            addValuetoOutput(title, content, ref apacheIssueContent, true, true);
+            addValuetoOutput(content, ref apacheIssueContent, true, true);
 
             // Status.
-            title = doc.DocumentNode.SelectNodes($"//*[@id='issuedetails']/li[2]/div/strong");
             content = doc.DocumentNode.SelectNodes($"//*[@id='status-val']/span");
-            addValuetoOutput(title, content, ref apacheIssueContent, true, true);
+            addValuetoOutput(content, ref apacheIssueContent, true, true);
 
-            // Priority.
-            title = doc.DocumentNode.SelectNodes($"//*[@id='issuedetails']/li[3]/div/strong");
+            // Priority. 
             content = doc.DocumentNode.SelectNodes($"//*[@id='priority-val']/text()");
-            addValuetoOutput(title, content, ref apacheIssueContent, true, true);
+            addValuetoOutput(content, ref apacheIssueContent, true, true);
 
             // Resolution.
-            title = doc.DocumentNode.SelectNodes($"//*[@id='issuedetails']/li[4]/div/strong");
             content = doc.DocumentNode.SelectNodes($"//*[@id='resolution-val']/text()");
-            addValuetoOutput(title, content, ref apacheIssueContent, true, true);
+            addValuetoOutput(content, ref apacheIssueContent, true, true);
 
             // Affects Version.
-            title = doc.DocumentNode.SelectNodes($"//*[@id='issuedetails']/li[5]/div/strong");
             content = doc.DocumentNode.SelectNodes($"//*[@id='versions-field']/span");
-            addValuetoOutput(title, content, ref apacheIssueContent, true, true);
+            addValuetoOutput(content, ref apacheIssueContent, true, true);
 
             // Fix Version.
-            title = doc.DocumentNode.SelectNodes($"//*[@id='issuedetails']/li[6]/div/strong");
             content = doc.DocumentNode.SelectNodes($"//*[@id='fixVersions-field']");
-            addValuetoOutput(title, content, ref apacheIssueContent, true, true);
+            addValuetoOutput(content, ref apacheIssueContent, true, true);
 
             // Component.
-            title = doc.DocumentNode.SelectNodes($"//*[@id='issuedetails']/li[7]/div/strong");
             content = doc.DocumentNode.SelectNodes($"//*[@id='components-field']/a");
-            addValuetoOutput(title, content, ref apacheIssueContent, true, true);
+            addValuetoOutput(content, ref apacheIssueContent, true, true);
 
             // Labels.
-            title = doc.DocumentNode.SelectNodes($"//*[@id='issuedetails']/li[8]/div/strong");
             content = doc.DocumentNode.SelectNodes($"//*[@id='labels-13028113-value']");
-            addValuetoOutput(title, content, ref apacheIssueContent, true, true);
+            addValuetoOutput(content, ref apacheIssueContent, true, true);
 
-            // Patch Info.
-            title = doc.DocumentNode.SelectNodes($"//*[@id='rowForcustomfield_12310041']/div/strong");
+            // Patch Info.   
             content = doc.DocumentNode.SelectNodes($"//*[@id='customfield_12310041-field']/span");
-            addValuetoOutput(title, content, ref apacheIssueContent, true, true);
+            addValuetoOutput(content, ref apacheIssueContent, true, true);
 
             // Estimated Complexity.
-            title = doc.DocumentNode.SelectNodes($"//*[@id='rowForcustomfield_12310060']/div/strong");
             content = doc.DocumentNode.SelectNodes($"//*[@id='customfield_12310060-val']");
-            addValuetoOutput(title, content, ref apacheIssueContent, true, true);
+            addValuetoOutput(content, ref apacheIssueContent, true, true);
 
             #endregion
 
             #region People.
 
             // Assingee
-            title = doc.DocumentNode.SelectNodes($"//*[@id='peopledetails']/li/dl[1]/dt");
             content = doc.DocumentNode.SelectNodes($"//*[@id='issue_summary_assignee_davsclaus']/text()");
-            addValuetoOutput(title, content, ref apacheIssueContent, false, true);
+            addValuetoOutput(content, ref apacheIssueContent, false, true);
 
             // Reporter
-            title = doc.DocumentNode.SelectNodes($"//*[@id='peopledetails']/li/dl[2]/dt");
             content = doc.DocumentNode.SelectNodes($"//*[@id='issue_summary_reporter_bobpaulin']/text()");
-            addValuetoOutput(title, content, ref apacheIssueContent, false, true);
+            addValuetoOutput(content, ref apacheIssueContent, false, true);
 
             // Votes:
-            title = doc.DocumentNode.SelectNodes($"//*[@id='peoplemodule']/div[2]/ul[2]/li/dl[1]/dt");
             content = doc.DocumentNode.SelectNodes($"//*[@id='vote-data']");
-            addValuetoOutput(title, content, ref apacheIssueContent, false, true);
+            addValuetoOutput(content, ref apacheIssueContent, false, true);
 
             // Watchers:
-            title = doc.DocumentNode.SelectNodes($"//*[@id='peoplemodule']/div[2]/ul[2]/li/dl[2]/dt");
             content = doc.DocumentNode.SelectNodes($"//*[@id='watcher-data']");
-            addValuetoOutput(title, content, ref apacheIssueContent, false, true);
+            addValuetoOutput(content, ref apacheIssueContent, false, true);
             #endregion
 
             #region Dates
 
-            // Create date.
-            title = doc.DocumentNode.SelectNodes($"//*[@id='datesmodule']/div[2]/ul/li/dl[1]/dt");
+            // Create date. 
             content = doc.DocumentNode.SelectNodes($"//*[@id='created-val']/time");
-            addValuetoOutput(title, content, ref apacheIssueContent, false, true);
+            addValuetoOutput(content, ref apacheIssueContent, false, true);
 
             // Update date.
-            title = doc.DocumentNode.SelectNodes($"//*[@id='datesmodule']/div[2]/ul/li/dl[2]/dt");
             content = doc.DocumentNode.SelectNodes($"//*[@id='updated-val']/time");
-            addValuetoOutput(title, content, ref apacheIssueContent, false, true);
+            addValuetoOutput(content, ref apacheIssueContent, false, true);
 
-            title = doc.DocumentNode.SelectNodes($"//*[@id='datesmodule']/div[2]/ul/li/dl[3]/dt");
+            //title = doc.DocumentNode.SelectNodes($"//*[@id='datesmodule']/div[2]/ul/li/dl[3]/dt");
             content = doc.DocumentNode.SelectNodes($"//*[@id='resolutiondate-val']/time");
-            addValuetoOutput(title, content, ref apacheIssueContent, false, true);
+            addValuetoOutput(content, ref apacheIssueContent, false, true);
 
             #endregion
 
-            #region Description & Comment
+            #region Description
 
             // Description.
-            title = doc.DocumentNode.SelectNodes($"//*[@id='descriptionmodule_heading']/h4");
             content = doc.DocumentNode.SelectNodes($"//*[@id='description-val']/div");
-            addValuetoOutput(title, content, ref apacheIssueContent, true, false);
+            addValuetoOutput(content, ref apacheIssueContent, false, true);
+
+            #endregion
+
+            #region Comment
+
+            // Retrieve the content of comment field.
+
+            XmlTextReader reader = new XmlTextReader(urlforComment);
+            string outComment = "";
+            bool isStartOutComment = false;
+            try
+            {
+
+                while (reader.Read())
+                {
+
+                    switch (reader.NodeType)
+                    {
+                        case XmlNodeType.Element: // The node is an element.
+
+                            if (string.Equals(reader.Name, "comment"))
+                            {
+                                isStartOutComment = true;
+                            }
+
+                            if (isStartOutComment)
+                            {
+                                var author = reader.GetAttribute("author");
+                                var createTime = reader.GetAttribute("createTime");
+                                outComment += $"{author} added a comment - {createTime}:";
+                            }
+
+                            //Console.Write("<" + reader.Name);
+                            //Console.WriteLine(">");
+                            break;
+
+                        case XmlNodeType.Text: //Display the text in each element.
+
+                            //Console.WriteLine(reader.Value);
+                            if (isStartOutComment)
+                            {
+                                outComment += $"{reader.Value}";
+                            }
+
+                            break;
+
+                        case XmlNodeType.EndElement: //Display the end of the element.
+                            //Console.Write("</" + reader.Name);
+                            //Console.WriteLine(">");
+                            if (string.Equals(reader.Name, "comment"))
+                            {
+                                isStartOutComment = false;
+                            }
+                            break;
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                outComment = "Privacy issue: This issue need to login first.";
+
+            }
+            finally
+            {
+                if (string.IsNullOrEmpty(outComment))
+                {
+                    outComment = "No comment";
+                }
+                apacheIssueContent.contents.Add($"{outComment.Replace("\n", "").Replace(";", ".")}\n");
+                Console.WriteLine($"Issue:{issueNo} process completed!");
+            }
 
             #endregion
 
@@ -138,46 +261,59 @@ namespace ApacheIssueCrawler
 
             #region Step 02: export to CSV file.
 
-            string directory = @"c:\tmp"; ;
-            string fileName = $"result_{DateTime.Now.ToString("yyyyMMddHHmmss")}.csv";
-            exportToCSV(directory, fileName, apacheIssueContent);
-
+            if (isExportCSV)
+            {
+                string directory = @"c:\tmp"; ;
+                exportToCSV(directory, exportFileName, apacheIssueContent, isExportCSV);
+            }
+           
             #endregion
+
         }
 
-        private static void addValuetoOutput(HtmlNodeCollection title, HtmlNodeCollection content, ref ApacheIssueContent result, bool isRemoveContentInnerSpace, bool isReplaceInnerComma)
+        /// <summary>
+        /// Set the titles.
+        /// </summary>
+        /// <param name="apacheIssueContent"></param>
+        private static void setTitleforOutput(ref ApacheIssueContent apacheIssueContent)
         {
-           
+            apacheIssueContent.titles.Add($"Issue No;");
+            apacheIssueContent.titles.Add($"Type;");
+            apacheIssueContent.titles.Add($"Status;");
+            apacheIssueContent.titles.Add($"Priority;");
+            apacheIssueContent.titles.Add($"Resolution;");
+            apacheIssueContent.titles.Add($"Affects Version/s;");
+            apacheIssueContent.titles.Add($"Fix Version/ s;");
+            apacheIssueContent.titles.Add($"Component;");
+            apacheIssueContent.titles.Add($"Labels;");
+            apacheIssueContent.titles.Add($"Patch Info;");
+            apacheIssueContent.titles.Add($"Estimated Complexity;");
+            apacheIssueContent.titles.Add($"Assignee;");
+            apacheIssueContent.titles.Add($"Reporter;");
+            apacheIssueContent.titles.Add($"Votes;");
+            apacheIssueContent.titles.Add($"Watchers;");
+            apacheIssueContent.titles.Add($"Created;");
+            apacheIssueContent.titles.Add($"Updated;");
+            apacheIssueContent.titles.Add($"Resolved;");
+            apacheIssueContent.titles.Add($"Description;");
+            apacheIssueContent.titles.Add($"Comment;");
+        }
+
+        private static void addValuetoOutput(HtmlNodeCollection content, ref ApacheIssueContent result, bool isRemoveContentInnerSpace, bool isReplaceInnerSemicolon)
+        {
+
             string outputValue = "";
-
-            if (title != null)
-            {
-                foreach (var item in title)
-                {
-                    outputValue += item.InnerText.ToString().Replace(System.Environment.NewLine, "").Trim().Replace(":", "");
-                }
-            }
-            else
-            {
-                outputValue = "ParseTitleFail";
-            }
-          
-          
-            result.titles.Add(outputValue += ",");
-
-            outputValue = "";
 
             if (content != null)
             {
                 foreach (var item in content)
                 {
                     outputValue += item.InnerText.ToString().Replace("\n", "").Trim();
-                    if (isRemoveContentInnerSpace)
+                    if (isReplaceInnerSemicolon)
                     {
-                        outputValue = outputValue.Replace(",", "/");
+                        outputValue = outputValue.Replace(";", " ");
                     }
                 }
-
                 if (isRemoveContentInnerSpace)
                 {
                     outputValue = outputValue.Replace(" ", "");
@@ -185,9 +321,9 @@ namespace ApacheIssueCrawler
             }
             else
             {
-                outputValue = "ParseContentFail";
+                outputValue = "None";
             }
-            result.contents.Add(outputValue += ",");
+            result.contents.Add(outputValue += ";");
         }
 
         /// <summary>
@@ -196,7 +332,7 @@ namespace ApacheIssueCrawler
         /// <param name="directory">target directory.</param>
         /// <param name="fileName">target file name.</param>
         /// <param name="data">output data.</param>
-        static void exportToCSV(string directory, string fileName, ApacheIssueContent data)
+        static void exportToCSV(string directory, string fileName, ApacheIssueContent data, bool isExportTitle)
         {
             // Checking whether the directory exist or not.
             string directoryName = directory;
@@ -216,15 +352,16 @@ namespace ApacheIssueCrawler
             using (var sm = new StreamWriter(fileFullPath))
             {
 
- 
                 string title = "";
                 string content = "";
 
-                foreach (var item in data.titles)
+                if (isExportTitle)
                 {
-                    title += item;
+                    foreach (var item in data.titles)
+                    {
+                        title += item;
+                    }
                 }
-
 
                 foreach (var item in data.contents)
                 {
@@ -235,10 +372,9 @@ namespace ApacheIssueCrawler
                 title = title.Substring(0, title.Length - 1);
                 content = content.Substring(0, content.Length - 1);
 
-
-                sm.WriteLineAsync(title);
-                sm.WriteLineAsync(content);
-               
+                sm.WriteLine(title);
+                sm.WriteLine(content);
+                sm.Close();               
             }
         }
     }
